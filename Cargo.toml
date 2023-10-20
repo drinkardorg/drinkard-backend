@@ -1,0 +1,20 @@
+[package]
+name = "drinkard-backend"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+dotenv = "0.15.0"
+anyhow = "1.0.75"
+rocket_cors = "0.5.2"
+
+serde = { version = "1.0", features = ["derive"] }
+rocket = { version = "=0.5.0-rc.3", features = ["json"] }
+
+[dependencies.sqlx]
+version = "0.7.0"
+default-features = false
+features = ["macros", "migrate", "mysql", "runtime-tokio"]
+
+[default.databases.drinkard]
+url = "mysql://root:root@127.0.0.1/drinkard"
