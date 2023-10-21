@@ -4,6 +4,7 @@ use rocket::{launch, routes};
 pub mod authentication;
 pub mod cors;
 pub mod db;
+pub mod leaderboard;
 
 #[launch]
 async fn rocket() -> _ {
@@ -13,6 +14,7 @@ async fn rocket() -> _ {
         "/",
         routes![
             cors::all_options,
+            leaderboard::leaderboard,
             authentication::register,
             authentication::login
         ],

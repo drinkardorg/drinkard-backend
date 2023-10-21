@@ -98,4 +98,11 @@ impl Db {
             .await?;
         Ok(user)
     }
+
+    pub async fn get_leaderboard(&self) -> Vec<User> {
+        sqlx::query_as::<_, User>("SELECT * FROM User ORDER BY EloPoints DESC LIMIT 100;")
+            .fetch_all(&self.pool)
+            .await
+            .unwrap()
+    }
 }
