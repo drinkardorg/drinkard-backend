@@ -1,45 +1,59 @@
+use std::sync::Arc;
+
 use crate::db::Db;
-use rocket::{
-    post,
-    serde::json::{self, json, Json, Value},
-    State,
-};
 use serde::{Deserialize, Serialize};
+use warp::reply::Json;
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct AuthError {
+    pub err: String,
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AuthenticationData {
-    username: String,
-    password: String,
+    pub username: String,
+    pub password: String,
 }
 
-#[post("/register", format = "json", data = "<authentication>")]
-pub async fn register(db: &State<Db>, authentication: Json<AuthenticationData>) -> Value {
+pub async fn register(authentication: AuthenticationData, db: Arc<Db>) -> String {
     if authentication.username.len() < 3 || authentication.username.len() > 15 {
-        return json!({"err":"Username must be between 3 to 15 characters"});
+        let error = AuthError {
+            err: String::from("Username must be between 3 to 15 characters"),
+        };
+        return serde_json::to_string(&error).unwrap();
     }
 
     if authentication.password.len() < 3 || authentication.password.len() > 250 {
-        return json!({"err":"Username must be between 3 to 250 characters"});
+        let error = AuthError {
+            err: String::from("Username must be between 3 to 250 characters"),
+        };
+        return serde_json::to_string(&error).unwrap();
     }
 
     match db
         .insert_user(&authentication.username, &authentication.password)
         .await
     {
-        Ok(()) => json!({"err":""}),
-        Err(error) => json!({"err":error.to_string()}),
+        Ok(()) => serde_json::to_string(&AuthError { err: String::new() }).unwrap(),
+        Err(error) => serde_json::to_string(&AuthError {
+            err: error.to_string(),
+        })
+        .unwrap(),
     }
 }
 
-#[post("/login", format = "json", data = "<authentication>")]
-pub async fn login(db: &State<Db>, authentication: Json<AuthenticationData>) -> Value {
+pub async fn login(authentication: AuthenticationData, db: Arc<Db>) -> Json {
     let user = match db
         .get_user_by_name_password(&authentication.username, &authentication.password)
         .await
     {
         Ok(user) => user,
-        Err(error) => return json!({"err": error.to_string()}),
+        Err(error) => {
+            return warp::reply::json(&AuthError {
+                err: error.to_string(),
+            })
+        }
     };
 
-    json::to_value(user).unwrap()
+    warp::reply::json(&user)
 }

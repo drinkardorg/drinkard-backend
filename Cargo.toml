@@ -4,17 +4,22 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+log = "0.4"
+warp = "0.3.6"
+rand = "0.8.5"
 dotenv = "0.15.0"
 anyhow = "1.0.75"
-rocket_cors = "0.5.2"
+serde_json = "1.0.107"
+tokio-stream = "0.1.14"
+pretty_env_logger = "0.5.0"
 
+tokio = { version = "1", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
-rocket = { version = "=0.5.0-rc.3", features = ["json"] }
+futures-util = { version = "0.3", default-features = false, features = [
+    "sink",
+] }
 
 [dependencies.sqlx]
 version = "0.7.0"
 default-features = false
 features = ["macros", "migrate", "mysql", "runtime-tokio"]
-
-[default.databases.drinkard]
-url = "mysql://root:root@127.0.0.1/drinkard"

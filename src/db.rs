@@ -70,6 +70,30 @@ impl Db {
         Ok(())
     }
 
+    pub async fn get_user_by_name(&self, username: &str) -> anyhow::Result<User> {
+        let mut transaction = self.pool.begin().await?;
+        let result: (bool,) =
+            sqlx::query_as("SELECT EXISTS(SELECT 1 FROM User WHERE Username = ?)")
+                .bind(username)
+                .fetch_one(&mut *transaction)
+                .await
+                .unwrap();
+
+        if !result.0 {
+            return Err(anyhow::Error::msg("Invalid username or password"));
+        }
+
+        const QUERY: &str = "
+            SELECT * FROM User WHERE Username = ?
+        ";
+
+        let user = sqlx::query_as::<_, User>(QUERY)
+            .bind(username)
+            .fetch_one(&mut *transaction)
+            .await?;
+        Ok(user)
+    }
+
     pub async fn get_user_by_name_password(
         &self,
         username: &str,
@@ -104,5 +128,23 @@ impl Db {
             .fetch_all(&self.pool)
             .await
             .unwrap()
+    }
+
+    pub async fn add_elo(&self, username: &str, elo: i32) {
+        sqlx::query("UPDATE User SET EloPoints = EloPoints + ? WHERE Username = ?")
+            .bind(elo)
+            .bind(username)
+            .execute(&self.pool)
+            .await
+            .unwrap();
+    }
+
+    pub async fn remove_elo(&self, username: &str, elo: i32) {
+        sqlx::query("UPDATE User SET EloPoints = EloPoints - ? WHERE Username = ?")
+            .bind(elo)
+            .bind(username)
+            .execute(&self.pool)
+            .await
+            .unwrap();
     }
 }
